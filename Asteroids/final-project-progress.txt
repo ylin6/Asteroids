@@ -1,0 +1,7 @@
+final-project-progress.txt
+Yucheng Lin
+Asteroids
+
+	For my Asteroid game, I have already generated the asteroids as an particle system. I have also loaded the space ship object and you can fly around space. I have also implemented collision detection and the game will end if you hit an asteroid. I now only need to add textures to make the game better looking, add menus for additional immersion, and gamify the program ( implement a score system, make it harder to avoid asteroids, etc). Furthermore, I would like to add an explosion particle system to show what happens if the spaceship hits an asteroid. 
+
+	Please let me know if my game is too simple or tell me any additional ideas you have for my Asteroid game.

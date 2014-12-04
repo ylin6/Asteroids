@@ -1,0 +1,14 @@
+# Blender MTL File: 'None'
+# Material Count: 1
+
+newmtl asteroid
+Ns 0.000000
+Ka 0.000000 0.000000 0.000000
+Kd 0.185098 0.185098 0.185098
+Ks 0.000000 0.000000 0.000000
+Ni 1.500000
+d 1.000000
+illum 2
+map_Kd /Users/Yucheng/Downloads/asteroid OBJ/Map__15_Noise.tga
+map_Bump -bm 0.800000 Map__4_Mix.tga
+map_Ka /Users/Yucheng/Downloads/asteroid OBJ/Map__15_Noise.tga

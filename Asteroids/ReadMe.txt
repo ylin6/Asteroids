@@ -1,0 +1,5 @@
+// ReadMe.txt
+// Yucheng Lin
+
+The program is found in programFiles folder. To compile, just type "make" in the command line and then 
+"./main" to run the program. When the program is ran, you should see a enviroment composed of different buildings and 2 cars - a lamborghini and a ferrari. The lamborghini is already driving and you can control the ferrari. You can move the ferrari forward/backwards by pressing 'w' or 's'. You can move the ferrari sideways by pressing 'a' or 'd'. You can also zoom in on the car by pressing 'i' or 'o'. Lastly you can rotate around the car by pressing the mouse buttons. The streets and buildings are textured and there is also a skybox cube map for the environment mapping. The program also features a particle system that simulates rain. There is also an infinite spurce light that is located the top of the world acting as a "moon".
