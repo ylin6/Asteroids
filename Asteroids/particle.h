@@ -16,13 +16,14 @@ class particle{
 		float getAlive();
 		void setAlive(float);
 		float getLifespan();
-
+		vec3 getDir();
 
 	private:
 		float alive;
 		float lifespan;
 		vec3 position;
 		float velocity;
+		vec3 direction;
 };
 
 #endif

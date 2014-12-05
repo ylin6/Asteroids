@@ -8,7 +8,6 @@
 #include <stack>
 #include "particle.h"
 #include <cstdlib>
-#include "SOIL/include/SOIL/SOIL.h"
 #include <cmath>
 
 
@@ -96,12 +95,14 @@ vector <vec2> tex_coords2;
 float etime = 0;
 int speedUp = 0;
 int death = 0;
-// FUNCTIONS ______________________________________________________
+float blast = 0;
+// FUNCTIONS _____________________________________________________________________________________________________________
 
 float distance(float x1, float y1, float z1, float x2, float y2, float z2){
 	return ( sqrt( pow((x1-x2),2) + pow( (y1-y2),2) + pow((z1-z2),2) ) );
 }
 
+// Creat Partices for asteroids, Explosion, Stars, and Jet Fuel
 void createParticles(){
 	for ( int i = 0; i < MAX_PARTICLES; i++){
 		particle newParticle;
@@ -116,32 +117,44 @@ void createExplosion(){
 	}
 }
 
-void advanceExplosion(){
-	int i;
-	for ( i = 0; i < JET_PARTS; i++){
-		explosion[i].setPos(explosion[i].getPos()+vec3(rand() % 3 + stars[i].getV(), rand() % 3 + stars[i].getV(),rand() % 3 + stars[i].getV()));
-		stars[i].setV(stars[i].getV() * GRAVITY );	
-		
-		if( distance(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z, vX, vY, vZ) > 400){
-			exit(0);
-		}
-	}
-}
-
-void drawExplosion(mat4 mav){
-	for (int i = 0; i < JET_PARTS; i++ ){
-		mv_stack.push(mav);
-			mat4 instance = Translate(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z ) *  Scale(0.5, 0.5 ,0.5);
-			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
-			glDrawArrays(GL_TRIANGLES, 0, 3);
-			mav = mv_stack.top();
-		mv_stack.pop();
-	}
-}
 void createStars(){
 		for ( int i = 0; i < STARCOUNT; i++){
 		particle newParticle(rand()%250, rand()%500, rand()%300+150, 1);
 		stars[i] = newParticle;
+	}
+}
+
+void createJet(){
+	for (int i = 0; i < JET_PARTS; i++){
+		particle newParticle(vX - (rand() % 4) / 5.0 + 4, vY + (rand() % 5) / 10.0 -2 , vZ + (rand() % 5) / 10.0 + 4, rand()%4 + 1);
+		jet[i] = newParticle;
+	}
+}
+
+// Regenerate new particles
+void addParticleJ(int i){
+	particle newParticle(vX  - (rand() % 4)/5.0 + 4, vY + (rand() % 5) / 10.0 -2 , vZ + (rand() % 5) / 10.0 + 4, (rand()%8) + 1);
+	jet[i] = newParticle;
+}
+
+void addParticle(int i, float v){
+	particle newParticle(rand()%250, rand()%500, rand()%300+150, (rand() % 3) + v);
+	rain[i] = newParticle;
+}
+
+// Advance the particles
+void advanceExplosion(){
+	int i;
+	for ( i = 0; i < JET_PARTS; i++){
+		float deltaX = (explosion[i].getV() + rand() % 3)/3;
+		float deltaY = (explosion[i].getV() + rand() % 3)/3;
+		float deltaZ = (explosion[i].getV() + rand() % 3)/3;
+		explosion[i].setPos(explosion[i].getPos()+vec3(deltaX * explosion[i].getDir().x, deltaY * explosion[i].getDir().y, deltaZ * explosion[i].getDir().z) );
+		explosion[i].setV(explosion[i].getV() * GRAVITY );	
+		
+		if( distance(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z, vX, vY, vZ) > 100){
+			exit(0);
+		}
 	}
 }
 
@@ -164,24 +177,6 @@ void advanceStars(){
 	}
 }
 
-void createJet(){
-	for (int i = 0; i < JET_PARTS; i++){
-		particle newParticle(vX - (rand() % 4) / 5.0 + 4, vY + (rand() % 5) / 10.0 -2 , vZ + (rand() % 5) / 10.0 + 4, rand()%4 + 1);
-		jet[i] = newParticle;
-	}
-}
-
-void addParticleJ(int i){
-	particle newParticle(vX  - (rand() % 4)/5.0 + 4, vY + (rand() % 5) / 10.0 -2 , vZ + (rand() % 5) / 10.0 + 4, (rand()%8) + 1);
-	jet[i] = newParticle;
-}
-
-void addParticle(int i, float v){
-	particle newParticle(rand()%250, rand()%500, rand()%300+150, (rand() % 3) + v);
-	rain[i] = newParticle;
-}
-
-
 void advanceParticleJ(){
 	int i;
 	for ( i = 0; i < JET_PARTS; i++){
@@ -200,17 +195,6 @@ void advanceParticleJ(){
 	}
 }
 
-GLuint loadTexture(string texname) {
-	GLuint tex = SOIL_load_OGL_texture(texname.c_str(), SOIL_LOAD_AUTO, SOIL_CREATE_NEW_ID, SOIL_FLAG_MIPMAPS | SOIL_FLAG_INVERT_Y | SOIL_FLAG_NTSC_SAFE_RGB | SOIL_FLAG_COMPRESS_TO_DXT);   
-	glBindTexture(GL_TEXTURE_2D, tex);
-   	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-   	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-   	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-   	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-   	glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-   	return tex;
-}
-
 void advanceParticles(){
 	int i;
 	for ( i = 0; i < MAX_PARTICLES; i++){
@@ -224,15 +208,66 @@ void advanceParticles(){
 		}
 
 		//cout<<distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ )<<endl;
-		if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0){
+		if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0 && death != 1){
 			cout<<"HIT"<<endl;
 			death = 1;
-			//exit(0);
+			directionY = 0;
+			directionZ = 0;
 		}
 
 
 	}
 }
+
+// Draw Particles
+void drawExplosion(mat4 mav){
+	for (int i = 0; i < JET_PARTS; i++ ){
+		blast = distance(vX, vY, vZ, explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z );
+		glUniform1f(flame, blast * .03);
+		mv_stack.push(mav);
+			mat4 instance = Translate(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z ) *  Scale(0.5, 0.5 ,0.5);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+			glDrawArrays(GL_POINTS, 0, 1);
+			mav = mv_stack.top();
+		mv_stack.pop();
+	}
+}
+
+
+void drawParticles(mat4 mav){
+	for (int i = 0; i < MAX_PARTICLES; i++ ){
+		mv_stack.push(mav);
+			mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(10,10,10);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+			glDrawArrays(GL_TRIANGLES, 0, points2.size());
+			mav = mv_stack.top();
+		mv_stack.pop();
+	}	
+}
+
+void drawStars(mat4 mav){
+	for (int i = 0; i < STARCOUNT; i++ ){
+		mv_stack.push(mav);
+			mat4 instance = Translate(stars[i].getPos().x, stars[i].getPos().y, stars[i].getPos().z ) *  Scale(0.25,0.25,0.25);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+			glDrawArrays(GL_TRIANGLES, 0, 36);
+			mav = mv_stack.top();
+		mv_stack.pop();
+	}	
+}
+
+void drawParticlesJ(mat4 mav){
+	for (int i = 0; i < JET_PARTS; i++ ){
+		glUniform1f(flame, (jet[i].getPos().x-460) / 10);
+		mv_stack.push(mav);
+			mat4 instance = Translate(jet[i].getPos().x, jet[i].getPos().y, jet[i].getPos().z );
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+			glDrawArrays(GL_POINTS, 0, 1);
+			mav = mv_stack.top();
+		mv_stack.pop();
+	}	
+}
+
 
 void quad( int a, int b, int c, int d ){
     vec3 vertices[8] = {
@@ -296,41 +331,6 @@ void makeCube(){
 }
 
 
-
-void drawParticles(mat4 mav){
-	for (int i = 0; i < MAX_PARTICLES; i++ ){
-		mv_stack.push(mav);
-			mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(10,10,10);
-			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
-			glDrawArrays(GL_TRIANGLES, 0, points2.size());
-			mav = mv_stack.top();
-		mv_stack.pop();
-	}	
-}
-
-void drawStars(mat4 mav){
-	for (int i = 0; i < STARCOUNT; i++ ){
-		mv_stack.push(mav);
-			mat4 instance = Translate(stars[i].getPos().x, stars[i].getPos().y, stars[i].getPos().z ) *  Scale(0.25,0.25,0.25);
-			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-			mav = mv_stack.top();
-		mv_stack.pop();
-	}	
-}
-
-void drawParticlesJ(mat4 mav){
-	for (int i = 0; i < JET_PARTS; i++ ){
-		glUniform1f(flame, (jet[i].getPos().x-460) / 10);
-		mv_stack.push(mav);
-			mat4 instance = Translate(jet[i].getPos().x, jet[i].getPos().y, jet[i].getPos().z );
-			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
-			glDrawArrays(GL_POINTS, 0, 1);
-			mav = mv_stack.top();
-		mv_stack.pop();
-	}	
-}
-
 GLuint loadBMP(string fileName){
 	unsigned char header[45];
 	unsigned int dataPos;
@@ -386,6 +386,8 @@ GLuint loadBMP(string fileName){
 }
 
 void init(){
+
+	// Initiate buffers
 	makeCube();
 	createExplosion();
 	createParticles(); 
@@ -393,6 +395,8 @@ void init(){
 	createStars();
 	Ship->loadObj("ship.obj", vertices, norm, uvs);
 	Roid->loadObj("asteroid.obj", points2, normals2, tex_coords2);
+
+	// Space Ship Buffer
 	GLuint vao;
 	glGenVertexArraysAPPLE(1, &vao);
 	glBindVertexArrayAPPLE( vao );
@@ -455,7 +459,7 @@ void init(){
     texLoc = glGetUniformLocation(program, "texMap");
     texLoc2 = glGetUniformLocation(program, "texMap2");
  
- 	
+ 	// Skybox buffers
     GLuint vao2;
 	glGenVertexArraysAPPLE(1, &vao2);
 	glBindVertexArrayAPPLE( vao2 );
@@ -467,7 +471,7 @@ void init(){
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(points), sizeof(normals), normals);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(points) + sizeof(normals),sizeof(tex_coords), tex_coords);
 
-
+    // Asteroid Buffers
     GLuint vao3;
     glGenVertexArraysAPPLE(1, &vao3);
     glBindVertexArrayAPPLE(vao3);
@@ -479,7 +483,6 @@ void init(){
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(points2), sizeof(normals2), &normals2);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(points2) + sizeof(normals2),sizeof(tex_coords2), &tex_coords2);
 	
-	//glEnable(GL_CULL_FACE);
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0,0.0,0.0,1.0);
 
@@ -501,11 +504,13 @@ void printw (float x, float y, float z, char* format, ...){
     }
 }
 
+
 void display(){
 	etime = .001 * glutGet(GLUT_ELAPSED_TIME);
 	
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
+	// Set Up Projection and View 
 	vec4 eye;
 	eye = vec4(radius * cos(theta) + vX, vY + 10, radius * sin(theta) + vZ, 1.0);
 
@@ -521,8 +526,7 @@ void display(){
 	mat4 p = Perspective(fovy,-aspect, zNear, zFar);
 	glUniformMatrix4fv(projection, 1, GL_TRUE, p);
 
-	//glDisable(GL_CULL_FACE);
-	//Bind Buffer for Car
+	//Bind Buffer for Space Ship
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glEnableVertexAttribArray(loc);
 	glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
@@ -532,7 +536,8 @@ void display(){
 
 	glEnableVertexAttribArray(vNormal);
 	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(vertices) + sizeof(uvs) ));
-	//texture = loadBMP("ship.bmp");
+
+	
 	glUniform1i(flag, 0);
 	mv_stack.push(mv);
 		vZ = vZ + directionZ * speed;
@@ -559,16 +564,12 @@ void display(){
 
 		mat4 instance = Translate(vX, vY, vZ) * RotateX(rX);
 		glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance);
-		if( death == 0){
-    		glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-    	}
+		if(death == 0) glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     	mv = mv_stack.top();
     mv_stack.pop();
 	
-    //glEnable(GL_CULL_FACE);
     
-    
-   	//Bind Buffer for enviroment
+   	//Bind Buffer for enviroment, stars, explosions and jet flames
 	glBindBuffer(GL_ARRAY_BUFFER, buffer2);
 	
     glEnableVertexAttribArray(loc);
@@ -583,46 +584,46 @@ void display(){
 	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) + sizeof(normals) ) );
 	
 	glUniform1i(flag, 0);
-	//texture = loadBMP("building.bmp");
-	//glActiveTexture(GL_TEXTURE0);
-	//glUniform1i(texLoc, 0);
-	//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT );
-    //glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT );
 
-    //drawCity(mv);
     if(death == 1){
+    	createExplosion();
+    	glUniform1i(flag,1);
+    	drawExplosion(mv);
+    	advanceExplosion();
+    	death++;
+    }
+
+    else if ( death == 0){
+		advanceParticleJ();
+    	glUniform1i(flag, 1);
+    	drawParticlesJ(mv);
+    }
+
+    else{
+    	glUniform1i(flag,1);
     	advanceExplosion();
     	drawExplosion(mv);
     }
-    if ( death == 0) advanceParticleJ();
-    glUniform1i(flag, 1);
-    drawParticlesJ(mv);
+   		
    	mv_stack.push(mv);
 		mat4 instance2 = Translate(450, 80, 300) * Scale(1000, 1000, 1000);
 		glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance2);
-		//texture = loadBMP("road1.bmp");
-		//glActiveTexture(GL_TEXTURE0);
-		//glUniform1i(texLoc, 0);
 		glUniform1i(flag, 2);
     	glDrawArrays(GL_TRIANGLES, 12, 6);
     	glUniform1i(flag, 5);
     	if (texFlag == 0 ) texture = loadBMP("sky.bmp");
     	else texture = loadBMP("sky2.bmp");
-    	//texture = loadTexture("sky2.BMP");
-		//glActiveTexture(GL_TEXTURE0);
-		//glUniform1i(texLoc, 0);
-		//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP );
-    	//glTexParameterf( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP );
     	glDrawArrays(GL_TRIANGLES, 0,6 );
     	glDrawArrays(GL_TRIANGLES, 12, 24);
-
     	mv = mv_stack.top();
     mv_stack.pop();
-  
+  	
+
   	glUniform1i(flag, 6);
   	advanceStars();  	
   	drawStars(mv);
 
+  	// Bind buffer for asteroids
     glUniform1i(flag, 3);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer3);
 	
@@ -687,10 +688,7 @@ void keyboard( int key, int x, int y ){
 		break;
 
     }
-    cout<<"vZ : "<<vZ<<endl;
-    cout<<"vX : "<<vX<<endl;
-    cout<<"vY : "<<vY<<endl;
-    //glutPostRedisplay();
+  
 }
 
 void keyRelease(int key, int x, int y){
@@ -723,7 +721,6 @@ void mouse(int button, int state, int x, int y){
 		theta -=dr;
 	}
 
-	//glutPostRedisplay();
 }
 
 void reshape(int width, int height){

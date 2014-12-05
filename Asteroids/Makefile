@@ -1,12 +1,11 @@
 GCC_OPTIONS=-Wall -pedantic -I ../include
-GL_OPTIONS=-framework GLUT -framework OpenGL -framework Cocoa -lSOIL
+GL_OPTIONS=-framework GLUT -framework OpenGL
 OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
-LIBPATH := -LSOIL/lib
 
 all: main
 
 main: main.o Object.o env.o particle.o
-	g++  -g main.o Object.o env.o particle.o ../Common/initShader.o $(OPTIONS) $(LIBPATH) -o main
+	g++  -g main.o Object.o env.o particle.o ../Common/initShader.o $(OPTIONS) -o main
 
 main.o: main.cpp 
 	g++ -c main.cpp
