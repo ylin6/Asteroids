@@ -99,6 +99,7 @@ float blast = 0;
 float angleX;
 float angleY;
 float angleZ;
+int camLock = 0;
 // FUNCTIONS _____________________________________________________________________________________________________________
 
 float distance(float x1, float y1, float z1, float x2, float y2, float z2){
@@ -155,7 +156,7 @@ void advanceExplosion(){
 		explosion[i].setPos(explosion[i].getPos()+vec3(deltaX * explosion[i].getDir().x, deltaY * explosion[i].getDir().y, deltaZ * explosion[i].getDir().z) );
 		explosion[i].setV(explosion[i].getV() * GRAVITY );	
 		
-		if( distance(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z, vX, vY, vZ) > 100){
+		if( distance(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z, vX, vY, vZ) > 200){
 			exit(0);
 		}
 	}
@@ -210,14 +211,16 @@ void advanceParticles(){
 		
 		}
 
-		//cout<<distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ )<<endl;
-		if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0 && death != 1){
-			cout<<"HIT"<<endl;
-			death = 1;
-			directionY = 0;
-			directionZ = 0;
+		if(death < 1){
+			if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0){
+				cout<<"HIT"<<endl;
+				death = 1;
+				camLock = 1;
+				directionY = 0;
+				directionZ = 0;
+				break;
+			}
 		}
-
 
 	}
 }
@@ -610,11 +613,13 @@ void display(){
 
     if(death == 1){
     	createExplosion();
+    	death++;
+    	cout<<death<<endl;
     	glUniform1i(flag,1);
     	drawExplosion(mv);
     	drawExplosion2(mv);
     	advanceExplosion();
-    	death++;
+    	
     }
 
     else if ( death == 0){
@@ -684,24 +689,24 @@ void keyboard( int key, int x, int y ){
 	    exit( EXIT_SUCCESS );
 	    break;
 	case GLUT_KEY_UP:
-		directionY = 1;
+		if(camLock != 1) directionY = 1;
 		break;
 	case GLUT_KEY_DOWN:
-		directionY = -1;
+		if(camLock != 1) directionY = -1;
 		break;
 	case GLUT_KEY_LEFT:
-		directionR = -1;
-		directionZ = -1;
+		if(camLock != 1) directionR = -1;
+		if(camLock != 1) directionZ = -1;
 		break;
 	case GLUT_KEY_RIGHT:
-		directionR = 1;
-		directionZ = 1;
+		if(camLock != 1) directionR = 1;
+		if(camLock != 1) directionZ = 1;
 		break;
 	case 'j':
-		directionR = -1;
+		if(camLock != 1) directionR = -1;
 		break;
 	case 'l':
-		directionR = 1;;
+		if(camLock != 1) directionR = 1;;
 		break;
 	case 'i':
 		//vX++;
