@@ -96,6 +96,9 @@ float etime = 0;
 int speedUp = 0;
 int death = 0;
 float blast = 0;
+float angleX;
+float angleY;
+float angleZ;
 // FUNCTIONS _____________________________________________________________________________________________________________
 
 float distance(float x1, float y1, float z1, float x2, float y2, float z2){
@@ -221,11 +224,31 @@ void advanceParticles(){
 
 // Draw Particles
 void drawExplosion(mat4 mav){
+
+	
+	glUniform1i(flag,0);
+	for (int i = 0; i < 30; i++ ){
+		angleZ += rand() % 10;
+		angleY += rand() % 10;
+		angleZ += rand() % 10;
+		mv_stack.push(mav);
+			mat4 instance = Translate(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z ) *  RotateZ(angleZ) * RotateX(angleX) * RotateY(angleY) * Scale(rand() % 8 + 1, rand() % 8 + 1  ,rand() % 8 + 1);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+			glDrawArrays(GL_TRIANGLES, 6, 3);
+			mav = mv_stack.top();
+		mv_stack.pop();
+	}
+
+}
+
+void drawExplosion2(mat4 mav){
+
+	glUniform1i(flag, 1);
 	for (int i = 0; i < JET_PARTS; i++ ){
 		blast = distance(vX, vY, vZ, explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z );
 		glUniform1f(flame, blast * .03);
 		mv_stack.push(mav);
-			mat4 instance = Translate(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z ) *  Scale(0.5, 0.5 ,0.5);
+			mat4 instance = Translate(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z );
 			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
 			glDrawArrays(GL_POINTS, 0, 1);
 			mav = mv_stack.top();
@@ -589,6 +612,7 @@ void display(){
     	createExplosion();
     	glUniform1i(flag,1);
     	drawExplosion(mv);
+    	drawExplosion2(mv);
     	advanceExplosion();
     	death++;
     }
@@ -603,6 +627,7 @@ void display(){
     	glUniform1i(flag,1);
     	advanceExplosion();
     	drawExplosion(mv);
+    	drawExplosion2(mv);
     }
    		
    	mv_stack.push(mv);

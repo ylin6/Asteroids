@@ -8,7 +8,7 @@ uniform float flame;
  
 void main(){
 	if(flag == 0){
-		gl_FragColor = color * vec4(0.9, 0.9, 0.9, 1.0) ;
+		gl_FragColor = color * vec4(1.0, 1.0, 1.0, 1.0) ;
 	}
 
 	else if (flag == 1){
