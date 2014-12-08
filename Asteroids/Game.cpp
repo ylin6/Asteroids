@@ -31,6 +31,7 @@ Game::Game(){
 	result = fmodSystem->createSound( "music/slotFill.mp3", FMOD_SOFTWARE, 0, &slotFill );
 	result = fmodSystem->createStream( "music/menu.mp3",FMOD_SOFTWARE | FMOD_LOOP_NORMAL, 0, &menu);
 	result = fmodSystem->createStream( "music/jet.mp3",FMOD_SOFTWARE | FMOD_LOOP_NORMAL, 0, &jetSounds);
+
 	result = fmodSystem->playSound(FMOD_CHANNEL_FREE, menu, false, &themeChannel);
 
 }
@@ -99,6 +100,18 @@ void Game::initReset(){
 	state = 1;
 
 }
+
+ void Game::cleanUp() {
+
+	// release FMOD Ex resources
+	result = explosionSound1->release();
+	result = slotFill->release();
+	result = explosionSound2->release();
+	result = jetSounds->release();
+	result = menu->release();
+
+}
+
 float Game::distance(float x1, float y1, float z1, float x2, float y2, float z2){
 	return ( sqrt( pow((x1-x2),2) + pow( (y1-y2),2) + pow((z1-z2),2) ) );
 }
@@ -210,7 +223,6 @@ void Game::advanceParticles(){
 
 		if(death < 1){
 			if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0){
-				cout<<"HIT"<<endl;
 				death = 1;
 				jetChannel->setPaused(true);
 				camLock = 1;
@@ -734,7 +746,8 @@ void Game::keyboard( int key, int x, int y ){
     switch( key ) {
 	case 033: // Escape Key
 	case 'q': case 'Q':
-	    exit( EXIT_SUCCESS );
+		cleanUp();
+	    exit(0);
 	    break;
 	case GLUT_KEY_UP:
 		if(camLock != 1 && state == 1){
@@ -797,6 +810,7 @@ void Game::mouse(int button, int buttonState, int x, int y){
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 600 && y < 665){
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
+		cleanUp();
 		exit(0);
 	}
 
@@ -810,6 +824,7 @@ void Game::mouse(int button, int buttonState, int x, int y){
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 600 && y < 665){
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
+		cleanUp();
 		exit(0);
 	}
 	

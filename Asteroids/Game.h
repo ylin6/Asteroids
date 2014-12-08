@@ -41,7 +41,8 @@ class Game{
 		void initReset();
 		void drawMenu(string);
 		void soundCheck();
-
+		void cleanUp();
+		
 		GLuint loadBMP(string);
 		float distance(float, float, float, float, float, float);
 		void createParticles();
