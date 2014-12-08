@@ -672,8 +672,8 @@ void Game::display(){
 			glUniform1i(flag, 2);
     		glDrawArrays(GL_TRIANGLES, 12, 6);
     		glUniform1i(flag, 5);
-    		if (texFlag == 0 ) texture = loadBMP("sky.bmp");
-    		else texture = loadBMP("sky2.bmp");
+    		if (texFlag == 0 ) texture = loadBMP("images/sky.bmp");
+    		else texture = loadBMP("images/sky2.bmp");
     		glDrawArrays(GL_TRIANGLES, 0,6 );
     		glDrawArrays(GL_TRIANGLES, 12, 24);
     		mv = mv_stack.top();
@@ -707,11 +707,11 @@ void Game::display(){
 	}
 
 	else if ( state == 0){
-		drawMenu("menu_asteroid.bmp");
+		drawMenu("images/menu_asteroid.bmp");
 	}
 
 	else if ( state == 3){
-		drawMenu("gameover_asteroid.bmp");
+		drawMenu("images/gameover_asteroid.bmp");
 	}
 
 	glutSwapBuffers();
