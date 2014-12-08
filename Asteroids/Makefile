@@ -5,7 +5,7 @@ OPTIONS=$(GCC_OPTIONS) $(GL_OPTIONS)
 all: main
 
 main: main2.o Object.o env.o particle.o Game.o
-	g++  -g main2.o Object.o env.o particle.o Game.o ../Common/initShader.o $(OPTIONS) -o main
+	g++  -g main2.o Object.o env.o particle.o Game.o ../Common/initShader.o $(OPTIONS) fmodAPI/lib/libfmodex.dylib -o main
 
 Game.o: Game.cpp Game.h
 	g++ -c Game.cpp

@@ -12,6 +12,9 @@
 #include <cstdlib>
 #include <cmath>
 
+#include "fmodAPI/inc/fmod.hpp"
+#include "fmodAPI/inc/fmod.h"
+
 #define STARCOUNT 700
 #define JET_PARTS 5000
 #define MAX_PARTICLES 100
@@ -162,6 +165,20 @@ class Game{
 		vector <vec3> points2;
 		vector <vec3> normals2;
 		vector <vec2> tex_coords2;
+
+		// 	FMOD variables
+		FMOD::System *fmodSystem;
+		FMOD::Channel *channel;
+		FMOD_RESULT result;
+
+		FMOD::Sound *beep;
+		FMOD::Sound *explosionSound1;
+		FMOD::Sound *explosionSound2;
+		FMOD::Sound *slotFill;
+		FMOD::Sound *spaceShip;
+		FMOD::Sound *rev;
+		FMOD::Sound *menuSound;
+		FMOD::Sound *gameSound;
 
 		// Game Variables
 		float etime;

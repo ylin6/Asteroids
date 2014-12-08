@@ -21,6 +21,14 @@ Game::Game(){
 	vY = 80;
 	vZ = 300;
 	state = 0;
+
+	result = FMOD::System_Create( &fmodSystem );
+	result = fmodSystem->init( 32, FMOD_INIT_NORMAL, NULL );
+
+	result = fmodSystem->createSound( "music/explosion-01.mp3", FMOD_SOFTWARE, 0, &explosionSound1 );
+	result = fmodSystem->createSound( "music/explosion-02.mp3", FMOD_SOFTWARE, 0, &explosionSound2 );
+	result = fmodSystem->createSound( "music/slotFill.mp3", FMOD_SOFTWARE, 0, &slotFill );
+
 }
 
 // FUNCTIONS _____________________________________________________________________________________________________________
@@ -631,8 +639,9 @@ void Game::display(){
     	if(death == 1){
     		createExplosion();
     		death++;
-    		cout<<death<<endl;
     		glUniform1i(flag,1);
+    		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, explosionSound1, false, &channel);
+    		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, explosionSound2, false, &channel);
     		drawExplosion(mv);
     		drawExplosion2(mv);
     		advanceExplosion();
@@ -769,19 +778,23 @@ void Game::keyRelease(int key, int x, int y){
 
 void Game::mouse(int button, int buttonState, int x, int y){
 	if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 500 && y < 565){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		state = 1;
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 600 && y < 665){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		exit(0);
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 500 && y < 565){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		initReset();
 		state = 1;
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 600 && y < 665){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		exit(0);
 	}
 	
