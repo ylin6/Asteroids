@@ -21,6 +21,7 @@ Game::Game(){
 	vY = 80;
 	vZ = 300;
 	state = 0;
+	death = 0;
 
 	result = FMOD::System_Create( &fmodSystem );
 	result = fmodSystem->init( 32, FMOD_INIT_NORMAL, NULL );
@@ -28,6 +29,9 @@ Game::Game(){
 	result = fmodSystem->createSound( "music/explosion-01.mp3", FMOD_SOFTWARE, 0, &explosionSound1 );
 	result = fmodSystem->createSound( "music/explosion-02.mp3", FMOD_SOFTWARE, 0, &explosionSound2 );
 	result = fmodSystem->createSound( "music/slotFill.mp3", FMOD_SOFTWARE, 0, &slotFill );
+	result = fmodSystem->createStream( "music/menu.mp3",FMOD_SOFTWARE | FMOD_LOOP_NORMAL, 0, &menu);
+	result = fmodSystem->createStream( "music/jet.mp3",FMOD_SOFTWARE | FMOD_LOOP_NORMAL, 0, &jetSounds);
+	result = fmodSystem->playSound(FMOD_CHANNEL_FREE, menu, false, &themeChannel);
 
 }
 
@@ -83,7 +87,7 @@ void Game::initReset(){
 	rX = 0;
 	Index = 0;
 
-	etime = 0;
+	etime = 0.0;
 	speedUp = 0;
 	death = 0;
 	blast = 0;
@@ -208,6 +212,7 @@ void Game::advanceParticles(){
 			if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0){
 				cout<<"HIT"<<endl;
 				death = 1;
+				jetChannel->setPaused(true);
 				camLock = 1;
 				directionY = 0;
 				directionZ = 0;
@@ -716,6 +721,15 @@ void Game::idle(){
 	glutPostRedisplay();
 }
 
+void Game::soundCheck(){
+	if ( directionZ != 0 || directionY != 0 ){
+		result = jetChannel->setVolume(0.3);
+	}
+
+	else if ( directionZ == 0 && directionY == 0){
+		result = jetChannel->setVolume(0.2);
+	}
+}
 void Game::keyboard( int key, int x, int y ){
     switch( key ) {
 	case 033: // Escape Key
@@ -723,36 +737,34 @@ void Game::keyboard( int key, int x, int y ){
 	    exit( EXIT_SUCCESS );
 	    break;
 	case GLUT_KEY_UP:
-		if(camLock != 1 && state == 1) directionY = 1;
+		if(camLock != 1 && state == 1){
+			directionY = 1;
+		}
 		break;
 	case GLUT_KEY_DOWN:
-		if(camLock != 1 && state == 1) directionY = -1;
+		if(camLock != 1 && state == 1){
+			directionY = -1;
+		}
 		break;
 	case GLUT_KEY_LEFT:
-		if(camLock != 1 && state == 1) directionR = -1;
-		if(camLock != 1) directionZ = -1;
+		if(camLock != 1 && state == 1){ 
+			directionR = -1;
+			directionZ = -1;
+		}
 		break;
 	case GLUT_KEY_RIGHT:
-		if(camLock != 1 && state == 1) directionR = 1;
-		if(camLock != 1 && state == 1) directionZ = 1;
+		if(camLock != 1 && state == 1) {
+			directionR = 1;
+			directionZ = 1;
+		}
 		break;
-	case 'j':
-		if(camLock != 1 && state == 1) directionR = -1;
-		break;
-	case 'l':
-		if(camLock != 1 && state == 1) directionR = 1;;
-		break;
-	case 'i':
-		//vX++;
-		radius--;
-		break;
-	case 'o':
-		//vX--;
-		radius++;
+	default:
 		break;
 
     }
-  
+
+    soundCheck();
+   
 }
 
 void Game::keyRelease(int key, int x, int y){
@@ -766,13 +778,11 @@ void Game::keyRelease(int key, int x, int y){
 			directionR = 0;
 			directionZ = 0;
 			break;
-		case 'j':
-		case 'l':
-			directionR = 0;
-			break;
 		default:
 			break;
 	}
+
+	soundCheck();
 }
 
 
@@ -780,6 +790,9 @@ void Game::mouse(int button, int buttonState, int x, int y){
 	if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 500 && y < 565){
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		state = 1;
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, jetSounds, false, &jetChannel);
+		result = jetChannel->setVolume(0.2);
+
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 600 && y < 665){
@@ -791,6 +804,8 @@ void Game::mouse(int button, int buttonState, int x, int y){
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		initReset();
 		state = 1;
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, jetSounds, false, &jetChannel);
+		result = jetChannel->setVolume(0.2);
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 600 && y < 665){
@@ -824,13 +839,7 @@ void Game::play(){
 	setupDisplayCallback();
 	setupIdleCallback();
 	setupReshapeCallback();
-	/*
-	glutIdleFunc(idle);
-	glutDisplayFunc( display );
-	glutReshapeFunc( reshape );
-	glutSpecialFunc( keyboard );
-	glutSpecialUpFunc( keyRelease);
-	glutMouseFunc(mouse);*/
+	
 
 	glutMainLoop();
 

@@ -40,6 +40,7 @@ class Game{
 
 		void initReset();
 		void drawMenu(string);
+		void soundCheck();
 
 		GLuint loadBMP(string);
 		float distance(float, float, float, float, float, float);
@@ -168,6 +169,8 @@ class Game{
 
 		// 	FMOD variables
 		FMOD::System *fmodSystem;
+		FMOD::Channel *themeChannel;
+		FMOD::Channel *jetChannel;
 		FMOD::Channel *channel;
 		FMOD_RESULT result;
 
@@ -175,9 +178,8 @@ class Game{
 		FMOD::Sound *explosionSound1;
 		FMOD::Sound *explosionSound2;
 		FMOD::Sound *slotFill;
-		FMOD::Sound *spaceShip;
-		FMOD::Sound *rev;
-		FMOD::Sound *menuSound;
+		FMOD::Sound *jetSounds;
+		FMOD::Sound *menu;
 		FMOD::Sound *gameSound;
 
 		// Game Variables
