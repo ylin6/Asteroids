@@ -2,133 +2,118 @@
 // Yucheng Lin
 // 11.02.14
 
-#include "Angel.h"
-#include "Object.h"
-#include <iostream>
-#include <stack>
-#include "particle.h"
-#include <cstdlib>
-#include <cmath>
+#include "Game.h"
 
 
-#define STARCOUNT 700
-#define JET_PARTS 5000
-#define MAX_PARTICLES 100
-#define GRAVITY 1
-#define STEP 0.1
+// Constructor
+Game::Game(){
+	Ship = new Object();
+	Roid = new Object();
 
-// GLOBAL VARIABLES _________________________________________________
-GLuint buffer;
-GLuint buffer2;
-GLuint buffer3;
+	winH = 700;
+	winW = 700;
+	speed = 1.0;
+	radius = 100;
+	fovy = 30.0;
+	zNear = 1.0;
+	zFar = 1000;
+	vX = 450;
+	vY = 80;
+	vZ = 300;
+	state = 0;
+}
 
-GLuint texture;
-GLuint loc;
-GLuint vNormal;
-GLuint vTexCoord;
-
-GLuint texLoc;
-GLuint texLoc2;
-
-GLuint loc2;
-GLuint vNormal2;
-GLuint vTexCoord2;
-GLfloat flame;
-GLvoid *font_style = GLUT_BITMAP_TIMES_ROMAN_24;
-// Environment Variables
-Object* Ship;
-Object* Roid;
-
-// PARTICLE SYSTEM VARIABLES
-particle explosion[JET_PARTS];
-particle rain[MAX_PARTICLES];
-particle jet[JET_PARTS];
-particle stars[JET_PARTS];
-GLint flag;
-// Matrix Stack
-std::stack<mat4> mv_stack;
-
-// Window Variables
-int winW = 700;
-int winH = 700;
-int texFlag; 
-// Camera and Projection Variables
-float speed = 1.0;
-float directionZ = 0;
-float directionY = 0;
-float directionR = 0;
-GLfloat radius = 100;
-GLfloat theta = 0;
-GLfloat phi = 0;
-GLuint program;
-const GLfloat dr = 5.0 * DegreesToRadians;
-
-GLuint model_view;
-
-GLfloat fovy = 30.0;
-GLfloat aspect;
-
-GLfloat zNear = 1.0, zFar = 1000;
-
-GLuint projection;
-
-float vX = 450;
-float vY = 80;
-float vZ = 300;
-int rX = 0;
-// Cube Variables
-int Index = 0;
-
-vec3 normals[36];
-vec3 points[36];
-vec2 tex_coords[36];
-
-vector <vec3> vertices;
-vector <vec3> norm;
-vector <vec2> uvs;
-
-vector <vec3> points2;
-vector <vec3> normals2;
-vector <vec2> tex_coords2;
-
-// Game Variables
-float etime = 0;
-int speedUp = 0;
-int death = 0;
-float blast = 0;
-float angleX;
-float angleY;
-float angleZ;
-int camLock = 0;
 // FUNCTIONS _____________________________________________________________________________________________________________
+void Game::setupDisplayCallback(){
+	instance = this;
+   	::glutDisplayFunc(Game::displayCallback);
+	::glutIdleFunc(Game::displayCallback);
+}
 
-float distance(float x1, float y1, float z1, float x2, float y2, float z2){
+void Game::setupReshapeCallback(){
+  	instance = this;
+  	::glutReshapeFunc(Game::reshapeCallback);
+}
+
+void Game::setupKeyPressCallback(){
+  	instance = this;
+  	::glutSpecialFunc(Game::KeyPressCallback);
+}
+
+void Game::setupKeyReleaseCallback(){
+  	instance = this;
+  	::glutSpecialUpFunc(Game::KeyReleaseCallback);
+}
+
+void Game::setupIdleCallback(){
+  	instance = this;
+   	::glutIdleFunc(Game::displayCallback);
+}
+
+void Game::setupMouseCallback(){
+	instance = this;
+	::glutMouseFunc(Game::mouseCallback);
+}
+
+void Game::initReset(){
+	createParticles();
+	createStars();
+	createJet();
+
+	speed = 1.0;
+	directionZ = 0;
+	directionY = 0;
+	directionR = 0;
+	radius = 100;
+	theta = 0;
+	fovy = 30;
+	zNear = 1.0;
+	zFar = 1000;
+	vX = 450;
+	vY = 80;
+	vZ = 300;
+	rX = 0;
+	Index = 0;
+
+	etime = 0;
+	speedUp = 0;
+	death = 0;
+	blast = 0;
+	angleX = 0;
+	angleY = 0;
+	angleZ = 0;
+	camLock = 0;
+
+	state = 1;
+
+}
+float Game::distance(float x1, float y1, float z1, float x2, float y2, float z2){
 	return ( sqrt( pow((x1-x2),2) + pow( (y1-y2),2) + pow((z1-z2),2) ) );
 }
 
 // Creat Partices for asteroids, Explosion, Stars, and Jet Fuel
-void createParticles(){
+void Game::createParticles(){
 	for ( int i = 0; i < MAX_PARTICLES; i++){
 		particle newParticle;
 		rain[i] = newParticle;
 	}
 }
 
-void createExplosion(){
+void Game::createExplosion(){
 	for ( int i = 0; i < JET_PARTS; i++){
 		particle newParticle(vX, vY, vZ, 2);
 		explosion[i] = newParticle;
 	}
 }
 
-void createStars(){
+void Game::createStars(){
 		for ( int i = 0; i < STARCOUNT; i++){
 		particle newParticle(rand()%250, rand()%500, rand()%300+150, 1);
 		stars[i] = newParticle;
 	}
 }
 
-void createJet(){
+void Game::createJet(){
 	for (int i = 0; i < JET_PARTS; i++){
 		particle newParticle(vX - (rand() % 4) / 5.0 + 4, vY + (rand() % 5) / 10.0 -2 , vZ + (rand() % 5) / 10.0 + 4, rand()%4 + 1);
 		jet[i] = newParticle;
@@ -136,18 +121,18 @@ void createJet(){
 }
 
 // Regenerate new particles
-void addParticleJ(int i){
+void Game::addParticleJ(int i){
 	particle newParticle(vX  - (rand() % 4)/5.0 + 4, vY + (rand() % 5) / 10.0 -2 , vZ + (rand() % 5) / 10.0 + 4, (rand()%8) + 1);
 	jet[i] = newParticle;
 }
 
-void addParticle(int i, float v){
+void Game::addParticle(int i, float v){
 	particle newParticle(rand()%250, rand()%500, rand()%300+150, (rand() % 3) + v);
 	rain[i] = newParticle;
 }
 
 // Advance the particles
-void advanceExplosion(){
+void Game::advanceExplosion(){
 	int i;
 	for ( i = 0; i < JET_PARTS; i++){
 		float deltaX = (explosion[i].getV() + rand() % 3)/3;
@@ -157,12 +142,12 @@ void advanceExplosion(){
 		explosion[i].setV(explosion[i].getV() * GRAVITY );	
 		
 		if( distance(explosion[i].getPos().x, explosion[i].getPos().y, explosion[i].getPos().z, vX, vY, vZ) > 200){
-			exit(0);
+			state = 3;
 		}
 	}
 }
 
-void advanceStars(){
+void Game::advanceStars(){
 	int i;
 	for ( i = 0; i < STARCOUNT; i++){
 		stars[i].setPos(stars[i].getPos()+vec3(stars[i].getV(), 0,0));
@@ -181,7 +166,7 @@ void advanceStars(){
 	}
 }
 
-void advanceParticleJ(){
+void Game::advanceParticleJ(){
 	int i;
 	for ( i = 0; i < JET_PARTS; i++){
 		jet[i].setPos(jet[i].getPos()+vec3(jet[i].getV(), 0,0));
@@ -199,7 +184,7 @@ void advanceParticleJ(){
 	}
 }
 
-void advanceParticles(){
+void Game::advanceParticles(){
 	int i;
 	for ( i = 0; i < MAX_PARTICLES; i++){
 		rain[i].setPos(rain[i].getPos()+vec3(rain[i].getV(), 0,0));
@@ -226,7 +211,7 @@ void advanceParticles(){
 }
 
 // Draw Particles
-void drawExplosion(mat4 mav){
+void Game::drawExplosion(mat4 mav){
 
 	
 	glUniform1i(flag,0);
@@ -244,7 +229,7 @@ void drawExplosion(mat4 mav){
 
 }
 
-void drawExplosion2(mat4 mav){
+void Game::drawExplosion2(mat4 mav){
 
 	glUniform1i(flag, 1);
 	for (int i = 0; i < JET_PARTS; i++ ){
@@ -260,7 +245,7 @@ void drawExplosion2(mat4 mav){
 }
 
 
-void drawParticles(mat4 mav){
+void Game::drawParticles(mat4 mav){
 	for (int i = 0; i < MAX_PARTICLES; i++ ){
 		mv_stack.push(mav);
 			mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(10,10,10);
@@ -271,7 +256,7 @@ void drawParticles(mat4 mav){
 	}	
 }
 
-void drawStars(mat4 mav){
+void Game::drawStars(mat4 mav){
 	for (int i = 0; i < STARCOUNT; i++ ){
 		mv_stack.push(mav);
 			mat4 instance = Translate(stars[i].getPos().x, stars[i].getPos().y, stars[i].getPos().z ) *  Scale(0.25,0.25,0.25);
@@ -282,7 +267,7 @@ void drawStars(mat4 mav){
 	}	
 }
 
-void drawParticlesJ(mat4 mav){
+void Game::drawParticlesJ(mat4 mav){
 	for (int i = 0; i < JET_PARTS; i++ ){
 		glUniform1f(flame, (jet[i].getPos().x-460) / 10);
 		mv_stack.push(mav);
@@ -294,8 +279,7 @@ void drawParticlesJ(mat4 mav){
 	}	
 }
 
-
-void quad( int a, int b, int c, int d ){
+void Game::quad( int a, int b, int c, int d ){
     vec3 vertices[8] = {
 	vec3( -0.5, -0.5,  0.5), //0
 	vec3( -0.5,  0.5,  0.5), //1
@@ -347,17 +331,32 @@ void quad( int a, int b, int c, int d ){
     Index++;
 }
 
-void makeCube(){
+void Game::makeCube(){
 	quad( 1, 0, 3, 2 );
     quad( 2, 3, 7, 6 );
     quad( 3, 0, 4, 7 );
     quad( 6, 5, 1, 2 );
     quad( 4, 5, 6, 7 );
     quad( 5, 4, 0, 1 );
+
+    points[36] = vec3(-1, 1, 0.0);
+    points[37] = vec3(-1, -1, 0.0);
+    points[38] = vec3(1, -1, 0.0);
+    points[39] = vec3(-1, 1, 0.0);
+    points[40] = vec3(1, -1, 0.0);
+    points[41] = vec3(1, 1, 0.0);
+
+    tex_coords[36] = vec2(0,0);
+    tex_coords[37] = vec2(0,1);
+    tex_coords[38] = vec2(1,1);
+    tex_coords[39] = vec2(0,0);
+    tex_coords[40] = vec2(1,1);
+    tex_coords[41] = vec2(1,0);
+
 }
 
 
-GLuint loadBMP(string fileName){
+GLuint Game::loadBMP(string fileName){
 	unsigned char header[45];
 	unsigned int dataPos;
 	unsigned int width, height;
@@ -411,7 +410,24 @@ GLuint loadBMP(string fileName){
 	return textureID;
 }
 
-void init(){
+void Game::drawMenu(string fileName){
+	glBindBuffer(GL_ARRAY_BUFFER, buffer2);
+	
+    glEnableVertexAttribArray(loc);
+	glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+
+	
+	glEnableVertexAttribArray(vNormal);
+	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) ) );
+
+
+	glEnableVertexAttribArray(vTexCoord);
+	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) + sizeof(normals) ) );
+	texture = loadBMP(fileName);
+	glUniform1i(flag, 8);
+	glDrawArrays(GL_TRIANGLES, 36, 6);
+}
+void Game::init(){
 
 	// Initiate buffers
 	makeCube();
@@ -483,8 +499,7 @@ void init(){
 	model_view = glGetUniformLocation( program, "model_view" );
     projection = glGetUniformLocation( program, "projection" );
     texLoc = glGetUniformLocation(program, "texMap");
-    texLoc2 = glGetUniformLocation(program, "texMap2");
- 
+  
  	// Skybox buffers
     GLuint vao2;
 	glGenVertexArraysAPPLE(1, &vao2);
@@ -514,7 +529,7 @@ void init(){
 
 } 
 
-void printw (float x, float y, float z, char* format, ...){
+void Game::printw (float x, float y, float z, char* format, ...){
     va_list arg_list;
     char str[256];
 	int i;
@@ -531,182 +546,192 @@ void printw (float x, float y, float z, char* format, ...){
 }
 
 
-void display(){
-	etime = .001 * glutGet(GLUT_ELAPSED_TIME);
-	
+void Game::display(){
+
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
-	// Set Up Projection and View 
-	vec4 eye;
-	eye = vec4(radius * cos(theta) + vX, vY + 10, radius * sin(theta) + vZ, 1.0);
+	if( state == 1){
+		etime = .001 * glutGet(GLUT_ELAPSED_TIME);
 
-	vec4 at(vX, vY, vZ, 0);
-	vec4 up(0.0, 1.0, 0.0, 0.0);
+		// Set Up Projection and View 
+		vec4 eye;
+		eye = vec4(radius * cos(theta) + vX, vY + 10, radius * sin(theta) + vZ, 1.0);
 
-	glUniform1i(flag, 7);
-	printw(0, 1.0, 100.0,"%d", (int)(etime * 10));
+		vec4 at(vX, vY, vZ, 0);
+		vec4 up(0.0, 1.0, 0.0, 0.0);
 
-	mat4 mv = LookAt(eye, at, up);
-	glUniformMatrix4fv(model_view, 1, GL_TRUE, mv);
+		glUniform1i(flag, 7);
+		printw(0, 1.0, 100.0,"%d", (int)(etime * 10));
 
-	mat4 p = Perspective(fovy,-aspect, zNear, zFar);
-	glUniformMatrix4fv(projection, 1, GL_TRUE, p);
+		mat4 mv = LookAt(eye, at, up);
+		glUniformMatrix4fv(model_view, 1, GL_TRUE, mv);
 
-	//Bind Buffer for Space Ship
-	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+		mat4 p = Perspective(fovy,-aspect, zNear, zFar);
+		glUniformMatrix4fv(projection, 1, GL_TRUE, p);
 
-	glEnableVertexAttribArray(vTexCoord);
-	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(vertices) ));
+		//Bind Buffer for Space Ship
+		glBindBuffer(GL_ARRAY_BUFFER, buffer);
+		glEnableVertexAttribArray(loc);
+		glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 
-	glEnableVertexAttribArray(vNormal);
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(vertices) + sizeof(uvs) ));
+		glEnableVertexAttribArray(vTexCoord);
+		glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(vertices) ));
+
+		glEnableVertexAttribArray(vNormal);
+		glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(vertices) + sizeof(uvs) ));
 
 	
-	glUniform1i(flag, 0);
-	mv_stack.push(mv);
-		vZ = vZ + directionZ * speed;
-		vY = vY + directionY * speed;
+		glUniform1i(flag, 0);
+		mv_stack.push(mv);
+			vZ = vZ + directionZ * speed;
+			vY = vY + directionY * speed;
 
-		if(vZ > 450) vZ = 450;
-		if(vZ < 150) vZ = 150;
-		if(vY > 500) vY = 500;
-		if(vY < 0) vY = 0;
-		if ( rX < 10 && rX > -10 ){
-			rX = rX + directionR * speed;
-		}
-
-		if( directionR == 0 && rX != 0){
-			if ( rX > 0){
-				rX--;	
+			if(vZ > 450) vZ = 450;
+			if(vZ < 150) vZ = 150;
+			if(vY > 500) vY = 500;
+			if(vY < 0) vY = 0;
+			if ( rX < 10 && rX > -10 ){
+				rX = rX + directionR * speed;
 			}
 
-			else{
-				rX++;
-			}
+			if( directionR == 0 && rX != 0){
+				if ( rX > 0){
+					rX--;	
+				}
+
+				else{
+					rX++;
+				}
 			
-		}
+			}
 
-		mat4 instance = Translate(vX, vY, vZ) * RotateX(rX);
-		glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance);
-		if(death == 0) glDrawArrays(GL_TRIANGLES, 0, vertices.size());
-    	mv = mv_stack.top();
-    mv_stack.pop();
+			mat4 instance = Translate(vX, vY, vZ) * RotateX(rX);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance);
+			if(death == 0) glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+    		mv = mv_stack.top();
+   		mv_stack.pop();
 	
     
-   	//Bind Buffer for enviroment, stars, explosions and jet flames
-	glBindBuffer(GL_ARRAY_BUFFER, buffer2);
+   		//Bind Buffer for enviroment, stars, explosions and jet flames
+		glBindBuffer(GL_ARRAY_BUFFER, buffer2);
 	
-    glEnableVertexAttribArray(loc);
-	glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+    	glEnableVertexAttribArray(loc);
+		glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 
 	
-	glEnableVertexAttribArray(vNormal);
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) ) );
+		glEnableVertexAttribArray(vNormal);
+		glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) ) );
 
 
-	glEnableVertexAttribArray(vTexCoord);
-	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) + sizeof(normals) ) );
+		glEnableVertexAttribArray(vTexCoord);
+		glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) + sizeof(normals) ) );
 	
-	glUniform1i(flag, 0);
+		glUniform1i(flag, 0);
 
-    if(death == 1){
-    	createExplosion();
-    	death++;
-    	cout<<death<<endl;
-    	glUniform1i(flag,1);
-    	drawExplosion(mv);
-    	drawExplosion2(mv);
-    	advanceExplosion();
+    	if(death == 1){
+    		createExplosion();
+    		death++;
+    		cout<<death<<endl;
+    		glUniform1i(flag,1);
+    		drawExplosion(mv);
+    		drawExplosion2(mv);
+    		advanceExplosion();
     	
-    }
+    	}
 
-    else if ( death == 0){
-		advanceParticleJ();
-    	glUniform1i(flag, 1);
-    	drawParticlesJ(mv);
-    }
+    	else if ( death == 0){
+			advanceParticleJ();
+    		glUniform1i(flag, 1);
+    		drawParticlesJ(mv);
+    	}
 
-    else{
-    	glUniform1i(flag,1);
-    	advanceExplosion();
-    	drawExplosion(mv);
-    	drawExplosion2(mv);
-    }
+    	else{
+    		glUniform1i(flag,1);
+    		advanceExplosion();
+    		drawExplosion(mv);
+    		drawExplosion2(mv);
+   		}
    		
-   	mv_stack.push(mv);
-		mat4 instance2 = Translate(450, 80, 300) * Scale(1000, 1000, 1000);
-		glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance2);
-		glUniform1i(flag, 2);
-    	glDrawArrays(GL_TRIANGLES, 12, 6);
-    	glUniform1i(flag, 5);
-    	if (texFlag == 0 ) texture = loadBMP("sky.bmp");
-    	else texture = loadBMP("sky2.bmp");
-    	glDrawArrays(GL_TRIANGLES, 0,6 );
-    	glDrawArrays(GL_TRIANGLES, 12, 24);
-    	mv = mv_stack.top();
-    mv_stack.pop();
+   		mv_stack.push(mv);
+			mat4 instance2 = Translate(450, 80, 300) * Scale(1000, 1000, 1000);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance2);
+			glUniform1i(flag, 2);
+    		glDrawArrays(GL_TRIANGLES, 12, 6);
+    		glUniform1i(flag, 5);
+    		if (texFlag == 0 ) texture = loadBMP("sky.bmp");
+    		else texture = loadBMP("sky2.bmp");
+    		glDrawArrays(GL_TRIANGLES, 0,6 );
+    		glDrawArrays(GL_TRIANGLES, 12, 24);
+    		mv = mv_stack.top();
+    	mv_stack.pop();
   	
 
-  	glUniform1i(flag, 6);
-  	advanceStars();  	
-  	drawStars(mv);
+  		glUniform1i(flag, 6);
+  		advanceStars();  	
+  		drawStars(mv);
 
-  	// Bind buffer for asteroids
-    glUniform1i(flag, 3);
-	glBindBuffer(GL_ARRAY_BUFFER, buffer3);
+  		// Bind buffer for asteroids
+    	glUniform1i(flag, 3);
+		glBindBuffer(GL_ARRAY_BUFFER, buffer3);
 	
-	glEnableVertexAttribArray(loc);
-	glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
+		glEnableVertexAttribArray(loc);
+		glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 
 	
-	glEnableVertexAttribArray(vNormal);
-	glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points2) ) );
+		glEnableVertexAttribArray(vNormal);
+		glVertexAttribPointer(vNormal, 3, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points2) ) );
 
 
-	glEnableVertexAttribArray(vTexCoord);
-	glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points2) + sizeof(normals2) ) );
+		glEnableVertexAttribArray(vTexCoord);
+		glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points2) + sizeof(normals2) ) );
 	
-	if ( etime > 3){
-    advanceParticles();
-    glUniform1i(flag, 4);
-    drawParticles(mv);
-    }
+		if ( etime > 3){
+    	advanceParticles();
+    	glUniform1i(flag, 4);
+    	drawParticles(mv);
+    	}
+	}
 
+	else if ( state == 0){
+		drawMenu("menu_asteroid.bmp");
+	}
+
+	else if ( state == 3){
+		drawMenu("gameover_asteroid.bmp");
+	}
 
 	glutSwapBuffers();
 }
 
-void idle(){
+void Game::idle(){
 	glutPostRedisplay();
 }
 
-void keyboard( int key, int x, int y ){
+void Game::keyboard( int key, int x, int y ){
     switch( key ) {
 	case 033: // Escape Key
 	case 'q': case 'Q':
 	    exit( EXIT_SUCCESS );
 	    break;
 	case GLUT_KEY_UP:
-		if(camLock != 1) directionY = 1;
+		if(camLock != 1 && state == 1) directionY = 1;
 		break;
 	case GLUT_KEY_DOWN:
-		if(camLock != 1) directionY = -1;
+		if(camLock != 1 && state == 1) directionY = -1;
 		break;
 	case GLUT_KEY_LEFT:
-		if(camLock != 1) directionR = -1;
+		if(camLock != 1 && state == 1) directionR = -1;
 		if(camLock != 1) directionZ = -1;
 		break;
 	case GLUT_KEY_RIGHT:
-		if(camLock != 1) directionR = 1;
-		if(camLock != 1) directionZ = 1;
+		if(camLock != 1 && state == 1) directionR = 1;
+		if(camLock != 1 && state == 1) directionZ = 1;
 		break;
 	case 'j':
-		if(camLock != 1) directionR = -1;
+		if(camLock != 1 && state == 1) directionR = -1;
 		break;
 	case 'l':
-		if(camLock != 1) directionR = 1;;
+		if(camLock != 1 && state == 1) directionR = 1;;
 		break;
 	case 'i':
 		//vX++;
@@ -721,7 +746,7 @@ void keyboard( int key, int x, int y ){
   
 }
 
-void keyRelease(int key, int x, int y){
+void Game::keyRelease(int key, int x, int y){
 	switch(key){
 		case GLUT_KEY_UP:
 		case GLUT_KEY_DOWN:
@@ -742,40 +767,59 @@ void keyRelease(int key, int x, int y){
 }
 
 
-void mouse(int button, int state, int x, int y){
-	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN){
-		theta +=dr;
+void Game::mouse(int button, int buttonState, int x, int y){
+	if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 500 && y < 565){
+		state = 1;
 	}
 
-	else if ( button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN){
-		theta -=dr;
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 600 && y < 665){
+		exit(0);
 	}
+
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 500 && y < 565){
+		initReset();
+		state = 1;
+	}
+
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 600 && y < 665){
+		exit(0);
+	}
+	
+
 
 }
 
-void reshape(int width, int height){
+void Game::reshape(int width, int height){
 	glViewport (0,0, width, height);
 	aspect = GLfloat(width)/height;
 }
 
 // GLUT MAIN LOOP ____________________________________________________________
-int main( int argc, char**argv){
+void Game::play(){
 
+	char *argv[] = {"Asteroids"};
+	int argc = 1;
 	glutInit( &argc, argv);
 	glutInitDisplayMode( GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH );
 	glutInitWindowSize(winH, winW);
 	glutCreateWindow("Asteroids");
 
 	init();
+	setupMouseCallback();
+	setupKeyPressCallback();
+	setupKeyReleaseCallback();
+	setupDisplayCallback();
+	setupIdleCallback();
+	setupReshapeCallback();
+	/*
 	glutIdleFunc(idle);
 	glutDisplayFunc( display );
 	glutReshapeFunc( reshape );
 	glutSpecialFunc( keyboard );
 	glutSpecialUpFunc( keyRelease);
-	glutMouseFunc(mouse);
+	glutMouseFunc(mouse);*/
 
 	glutMainLoop();
 
-	return 0;
-
+	return;
 }

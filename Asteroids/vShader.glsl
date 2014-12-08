@@ -20,6 +20,10 @@ void main(){
         gl_Position = vPosition + vec4(1.5, 1.85, 0.0, 1.0) ;
     }
 
+    else if ( flag == 8){
+        gl_Position = vPosition;
+    }
+
     else{
 	vec3 pos = (model_view * vPosition).xyz;
 	

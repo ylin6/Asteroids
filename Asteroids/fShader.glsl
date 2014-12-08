@@ -34,4 +34,11 @@ void main(){
 	else if (flag == 7){
 		gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0) ;
 	}
+
+	else if (flag == 8){
+		gl_FragColor = texture2D(texMap, texCoord);
+	}
+
+
+
 }
