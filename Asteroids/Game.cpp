@@ -22,6 +22,8 @@ Game::Game(){
 	vZ = 300;
 	state = 0;
 	death = 0;
+	drawEx2 = 0;
+
 
 	result = FMOD::System_Create( &fmodSystem );
 	result = fmodSystem->init( 32, FMOD_INIT_NORMAL, NULL );
@@ -29,6 +31,7 @@ Game::Game(){
 	result = fmodSystem->createSound( "music/explosion-01.mp3", FMOD_SOFTWARE, 0, &explosionSound1 );
 	result = fmodSystem->createSound( "music/explosion-02.mp3", FMOD_SOFTWARE, 0, &explosionSound2 );
 	result = fmodSystem->createSound( "music/slotFill.mp3", FMOD_SOFTWARE, 0, &slotFill );
+	result = fmodSystem->createSound( "music/lzr.mp3", FMOD_SOFTWARE, 0, &lzr);
 	result = fmodSystem->createStream( "music/menu.mp3",FMOD_SOFTWARE | FMOD_LOOP_NORMAL, 0, &menu);
 	result = fmodSystem->createStream( "music/jet.mp3",FMOD_SOFTWARE | FMOD_LOOP_NORMAL, 0, &jetSounds);
 
@@ -96,12 +99,14 @@ void Game::initReset(){
 	angleY = 0;
 	angleZ = 0;
 	camLock = 0;
+	bFlag = 0;
+	drawEx2 = 0;
 
 	state = 1;
 
 }
-
- void Game::cleanUp() {
+ 
+void Game::cleanUp() {
 
 	// release FMOD Ex resources
 	result = explosionSound1->release();
@@ -109,6 +114,7 @@ void Game::initReset(){
 	result = explosionSound2->release();
 	result = jetSounds->release();
 	result = menu->release();
+	result = lzr->release();
 
 }
 
@@ -124,6 +130,12 @@ void Game::createParticles(){
 	}
 }
 
+void Game::createExplosion2(float x, float y, float z){
+	for ( int i = 0; i < STARCOUNT; i++){
+		particle newParticle(x,y,z, 3);
+		explosion2[i] = newParticle;
+	}
+}
 void Game::createExplosion(){
 	for ( int i = 0; i < JET_PARTS; i++){
 		particle newParticle(vX, vY, vZ, 2);
@@ -172,6 +184,29 @@ void Game::advanceExplosion(){
 	}
 }
 
+void Game::advanceExplosion2(){
+	int i;
+	for ( i = 0; i < STARCOUNT; i++){
+		float deltaX = explosion2[i].getV() + rand() % 4;
+		float deltaZ = explosion2[i].getV() + rand() % 4;
+		explosion2[i].setPos(explosion2[i].getPos()+vec3(deltaX * explosion2[i].getDir().x, explosion2[i].getDir().y, deltaZ * explosion2[i].getDir().z));
+		explosion2[i].setV(explosion2[i].getV() * GRAVITY );	
+		
+		if( distance(explosion2[i].getPos().x, explosion2[i].getPos().y, explosion2[i].getPos().z, eX, eY, eZ) > 70){
+			drawEx2 = 0;
+			break;
+		}
+	}
+}
+
+void Game::advanceBullets(){
+	bullets[0].setPos(bullets[0].getPos()+vec3(-bullets[0].getV(), 0, -0.05));
+	bullets[1].setPos(bullets[1].getPos()+vec3(-bullets[1].getV(), 0, 0.05));
+
+	if( abs( bullets[0].getPos().x - vX ) > 250 ){
+		bFlag = 0;
+	}
+}
 void Game::advanceStars(){
 	int i;
 	for ( i = 0; i < STARCOUNT; i++){
@@ -213,7 +248,6 @@ void Game::advanceParticles(){
 	int i;
 	for ( i = 0; i < MAX_PARTICLES; i++){
 		rain[i].setPos(rain[i].getPos()+vec3(rain[i].getV(), 0,0));
-		//rain[i].setV(rain[i].getV() + GRAVITY * rain[i].getAlive() );
 		rain[i].setAlive(rain[i].getAlive() + STEP);
 
 		if (rain[i].getPos().x > 550){
@@ -230,6 +264,19 @@ void Game::advanceParticles(){
 				directionZ = 0;
 				break;
 			}
+
+			
+		}
+
+		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= 13.0 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= 13)  && bFlag == 1){
+				result = fmodSystem->playSound(FMOD_CHANNEL_FREE, explosionSound2, false, &channel);
+				if(drawEx2 == 0) createExplosion2(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z);
+				drawEx2 = 1;
+				eX = rain[i].getPos().x;
+				eY = rain[i].getPos().y;
+				eZ = rain[i].getPos().z;
+				bFlag = 0;
+				addParticle(i, rain[i].getV() + etime *.002);
 		}
 
 	}
@@ -253,7 +300,25 @@ void Game::drawExplosion(mat4 mav){
 	}
 
 }
+void Game::drawExplosion3(mat4 mav){
 
+	
+	glUniform1i(flag,0);
+	for (int i = 0; i < STARCOUNT; i++ ){
+		angleZ += rand() % 10;
+		angleY += rand() % 10;
+		angleZ += rand() % 10;
+		double j = (rand() % 8 + 1) / 8 ;
+		mv_stack.push(mav);
+			mat4 instance = Translate(explosion2[i].getPos().x, explosion2[i].getPos().y, explosion2[i].getPos().z ) * RotateX(angleZ) * RotateY(angleY) * RotateZ (angleZ) * Scale(j,j,j);
+			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+			if(i % 2 == 0) glDrawArrays(GL_TRIANGLES, 0, 36);
+			else glDrawArrays(GL_TRIANGLES, 6, 3);
+			mav = mv_stack.top();
+		mv_stack.pop();
+	}
+
+}
 void Game::drawExplosion2(mat4 mav){
 
 	glUniform1i(flag, 1);
@@ -281,6 +346,20 @@ void Game::drawParticles(mat4 mav){
 	}	
 }
 
+void Game::drawBullets(mat4 mav){
+	mv_stack.push(mav);
+		mat4 instance = Translate(bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) *  Scale(20 ,0.25, 0.25);
+		glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		mav = mv_stack.top();
+	mv_stack.pop();
+	mv_stack.push(mav);
+		mat4 instance2 = Translate(bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z ) *  Scale(20 ,0.25, 0.25);
+		glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance2);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+		mav = mv_stack.top();
+	mv_stack.pop();
+}
 void Game::drawStars(mat4 mav){
 	for (int i = 0; i < STARCOUNT; i++ ){
 		mv_stack.push(mav);
@@ -651,8 +730,19 @@ void Game::display(){
 		glEnableVertexAttribArray(vTexCoord);
 		glVertexAttribPointer(vTexCoord, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET( sizeof(points) + sizeof(normals) ) );
 	
-		glUniform1i(flag, 0);
+		if(bFlag == 1){
+			glUniform1i(flag, 9);
+			advanceBullets();
+			drawBullets(mv);
+		}
 
+		if( drawEx2 == 1){
+			//glUniform1i(flag, 1);
+			advanceExplosion2();
+			drawExplosion3(mv);
+		}
+
+		glUniform1i(flag, 0);
     	if(death == 1){
     		createExplosion();
     		death++;
@@ -769,6 +859,19 @@ void Game::keyboard( int key, int x, int y ){
 		if(camLock != 1 && state == 1) {
 			directionR = 1;
 			directionZ = 1;
+		}
+		break;
+	case 'j':
+		theta++;
+		break;
+	case 32:
+		if(camLock != 1 && state == 1 && bFlag == 0){
+			bFlag = 1;
+			particle newBullet(vX, vY, vZ + 5, 4);
+			particle newBullet2(vX, vY, vZ - 5, 4);
+			bullets[0] = newBullet;
+			bullets[1] = newBullet2;
+			result = fmodSystem->playSound(FMOD_CHANNEL_FREE, lzr, false, &channel);
 		}
 		break;
 	default:

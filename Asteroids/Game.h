@@ -47,19 +47,24 @@ class Game{
 		float distance(float, float, float, float, float, float);
 		void createParticles();
 		void createExplosion();
+		void createExplosion2(float, float, float);
 		void createStars();
 		void createJet();
 		void addParticleJ(int);
 		void addParticle(int, float);
 		void advanceExplosion();
+		void advanceExplosion2();
 		void advanceStars();
 		void advanceParticles();
 		void advanceParticleJ();
+		void advanceBullets();
 		void drawExplosion(mat4);
 		void drawExplosion2(mat4);
+		void drawExplosion3(mat4);
 		void drawParticles(mat4);
 		void drawStars(mat4);
 		void drawParticlesJ(mat4);
+		void drawBullets(mat4);
 		void quad(int, int, int, int);
 		void makeCube();
 		void init();
@@ -117,9 +122,11 @@ class Game{
 
 		// PARTICLE SYSTEM VARIABLES
 		particle explosion[JET_PARTS];
+		particle explosion2[STARCOUNT];
 		particle rain[MAX_PARTICLES];
 		particle jet[JET_PARTS];
 		particle stars[JET_PARTS];
+		particle bullets[2];
 		GLint flag;
 		// Matrix Stack
 		std::stack<mat4> mv_stack;
@@ -182,8 +189,10 @@ class Game{
 		FMOD::Sound *jetSounds;
 		FMOD::Sound *menu;
 		FMOD::Sound *gameSound;
+		FMOD::Sound *lzr;
 
 		// Game Variables
+		int bFlag; // flag whether or not to draw the bullet
 		float etime;
 		int speedUp;
 		int death;
@@ -193,6 +202,11 @@ class Game{
 		float angleZ;
 		int camLock;
 		int state;	
+		int drawEx2; // Flag whether or not to draw asteroid explosion
+
+		float eX;
+		float eY;
+		float eZ;
 };
 
 #endif 
