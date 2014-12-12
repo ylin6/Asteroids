@@ -116,6 +116,7 @@ class Game{
 		GLuint texLoc;
 
 		GLfloat flame;
+		GLfloat sky;
 		GLvoid *font_style = GLUT_BITMAP_TIMES_ROMAN_24;
 		// Environment Variables
 		Object* Ship;
@@ -208,6 +209,8 @@ class Game{
 		float eX;
 		float eY;
 		float eZ;
+		int sign;
+		float bg;
 };
 
 #endif 

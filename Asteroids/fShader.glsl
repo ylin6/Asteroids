@@ -5,7 +5,7 @@ uniform sampler2D texMap;
 uniform sampler2D texMap2;
 uniform int flag;
 uniform float flame;
- 
+uniform float sky;
 void main(){
 	if(flag == 0){
 		gl_FragColor = color * vec4(1.0, 1.0, 1.0, 1.0) ;
@@ -24,7 +24,8 @@ void main(){
 	}
 
 	else if (flag == 5){
-		gl_FragColor = texture2D(texMap, texCoord);
+		
+		gl_FragColor = vec4(sky, 1.0, 1.0, 1.0) * texture2D(texMap, texCoord);
 	}
 
 	else if (flag == 6){

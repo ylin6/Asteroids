@@ -25,6 +25,8 @@ Game::Game(){
 	drawEx2 = 0;
 	etime = 0;
 	bFlag = 0;
+	bg = 0;
+	sign = 1;
 
 	result = FMOD::System_Create( &fmodSystem );
 	result = fmodSystem->init( 32, FMOD_INIT_NORMAL, NULL );
@@ -568,6 +570,7 @@ void Game::init(){
 
 	flag = glGetUniformLocation(program, "flag");
 	flame = glGetUniformLocation(program, "flame");
+	sky = glGetUniformLocation(program, "sky");
 
 	loc = glGetAttribLocation(program, "vPosition");
 	glEnableVertexAttribArray(loc);
@@ -670,7 +673,12 @@ void Game::display(){
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	if( state == 1){
-
+		 
+		if (bg > 1) sign = -1;
+		else if ( bg < 0) sign =1;
+		bg = bg + (0.003 * sign);
+		cout<<bg<<endl;
+		glUniform1f(sky,bg);
 		// Set Up Projection and View 
 		vec4 eye;
 		eye = vec4(radius * cos(theta) + vX, vY + 10, radius * sin(theta) + vZ, 1.0);
