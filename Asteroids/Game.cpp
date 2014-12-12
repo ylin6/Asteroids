@@ -249,7 +249,7 @@ void Game::advanceParticles(){
 	for ( i = 0; i < MAX_PARTICLES; i++){
 		rain[i].setPos(rain[i].getPos()+vec3(rain[i].getV(), 0,0));
 		rain[i].setAlive(rain[i].getAlive() + STEP);
-		int r = rain[i].getRadius()/2 + 7.9;
+		int r = rain[i].getRadius() + 7;
 
 		if (rain[i].getPos().x > 550){
 			addParticle(i, rain[i].getV() + etime *.002);
@@ -260,16 +260,22 @@ void Game::advanceParticles(){
 			if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= r){
 				death = 1;
 				jetChannel->setPaused(true);
-				//camLock = 1;
+				camLock = 1;
 				directionY = 0;
 				directionZ = 0;
+				if(drawEx2 == 0) createExplosion2(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z);
+				drawEx2 = 1;
+				eX = rain[i].getPos().x;
+				eY = rain[i].getPos().y;
+				eZ = rain[i].getPos().z;
+				addParticle(i, rain[i].getV() + etime *.002);
 				break;
 			}
 
 			
 		}
 		
-		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= r-3.5 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= r-3.5)  && bFlag == 1){
+		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= r-7 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= r-7)  && bFlag == 1){
 				result = fmodSystem->playSound(FMOD_CHANNEL_FREE, explosionSound2, false, &channel);
 				if(drawEx2 == 0) createExplosion2(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z);
 				drawEx2 = 1;
@@ -887,7 +893,7 @@ void Game::keyboard( int key, int x, int y ){
 		vX-=2;
 		break;
 	case 32:
-		if(state == 1 && bFlag == 0){
+		if(state == 1 && bFlag == 0 && death == 0){
 			bFlag = 1;
 
 			particle newBullet(vX, vY, vZ + 5, 4);
