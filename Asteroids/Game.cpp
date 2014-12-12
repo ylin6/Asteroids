@@ -816,6 +816,10 @@ void Game::display(){
 		drawMenu("images/gameover_asteroid.bmp");
 	}
 
+	else if ( state == 2){
+		drawMenu("images/p_asteroid.bmp");
+	}
+
 	glutSwapBuffers();
 }
 
@@ -874,6 +878,10 @@ void Game::keyboard( int key, int x, int y ){
 			result = fmodSystem->playSound(FMOD_CHANNEL_FREE, lzr, false, &channel);
 		}
 		break;
+	case 'p':
+		if (state == 1) state = 2;
+		else if(state == 2) state =1 ;
+		break;
 	default:
 		break;
 
@@ -930,6 +938,25 @@ void Game::mouse(int button, int buttonState, int x, int y){
 		cleanUp();
 		exit(0);
 	}
+
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 2 && y > 580 && y < 635){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
+		cleanUp();
+		exit(0);
+	} 
+
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 2 && y > 425 && y < 490){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
+		initReset();
+		state = 1;
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, jetSounds, false, &jetChannel);
+		result = jetChannel->setVolume(0.2);
+	}
+
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 2 && y > 500 && y < 565){
+		state = 1;
+	}	
+
 	
 
 
