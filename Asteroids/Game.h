@@ -38,6 +38,7 @@ class Game{
 		void setupIdleCallback();
 		void setupMouseCallback();
 
+		void drawSphere(double, mat4);
 		void initReset();
 		void drawMenu(string);
 		void soundCheck();
@@ -203,7 +204,7 @@ class Game{
 		int camLock;
 		int state;	
 		int drawEx2; // Flag whether or not to draw asteroid explosion
-
+		int ammo;
 		float eX;
 		float eY;
 		float eZ;

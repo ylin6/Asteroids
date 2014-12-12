@@ -17,8 +17,10 @@ class particle{
 		void setAlive(float);
 		float getLifespan();
 		vec3 getDir();
+		int getRadius();
 
 	private:
+		int radius;
 		float alive;
 		float lifespan;
 		vec3 position;

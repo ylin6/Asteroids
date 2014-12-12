@@ -23,7 +23,7 @@ Game::Game(){
 	state = 0;
 	death = 0;
 	drawEx2 = 0;
-
+	etime = 0;
 
 	result = FMOD::System_Create( &fmodSystem );
 	result = fmodSystem->init( 32, FMOD_INIT_NORMAL, NULL );
@@ -90,7 +90,6 @@ void Game::initReset(){
 	vZ = 300;
 	rX = 0;
 	Index = 0;
-
 	etime = 0.0;
 	speedUp = 0;
 	death = 0;
@@ -249,6 +248,7 @@ void Game::advanceParticles(){
 	for ( i = 0; i < MAX_PARTICLES; i++){
 		rain[i].setPos(rain[i].getPos()+vec3(rain[i].getV(), 0,0));
 		rain[i].setAlive(rain[i].getAlive() + STEP);
+		int r = rain[i].getRadius()/2 + 7.5;
 
 		if (rain[i].getPos().x > 550){
 			addParticle(i, rain[i].getV() + etime *.002);
@@ -256,10 +256,10 @@ void Game::advanceParticles(){
 		}
 
 		if(death < 1){
-			if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= 15.0){
+			if( distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, vX, vY, vZ ) <= r){
 				death = 1;
 				jetChannel->setPaused(true);
-				camLock = 1;
+				//camLock = 1;
 				directionY = 0;
 				directionZ = 0;
 				break;
@@ -267,8 +267,8 @@ void Game::advanceParticles(){
 
 			
 		}
-
-		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= 13.0 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= 13)  && bFlag == 1){
+		
+		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= r-4 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= r-4)  && bFlag == 1){
 				result = fmodSystem->playSound(FMOD_CHANNEL_FREE, explosionSound2, false, &channel);
 				if(drawEx2 == 0) createExplosion2(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z);
 				drawEx2 = 1;
@@ -338,7 +338,7 @@ void Game::drawExplosion2(mat4 mav){
 void Game::drawParticles(mat4 mav){
 	for (int i = 0; i < MAX_PARTICLES; i++ ){
 		mv_stack.push(mav);
-			mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(10,10,10);
+			mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(rain[i].getRadius(),rain[i].getRadius(),rain[i].getRadius());
 			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
 			glDrawArrays(GL_TRIANGLES, 0, points2.size());
 			mav = mv_stack.top();
@@ -649,13 +649,20 @@ void Game::printw (float x, float y, float z, char* format, ...){
     }
 }
 
+void Game::drawSphere(double r, mat4 mav){
 
+	mv_stack.push(mav);
+		mat4 instance = Translate(vX, vY, vZ) * Scale(15, 15, 15);
+		glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+		gluSphere(gluNewQuadric(), 15, 10, 10);
+		mav = mv_stack.top();
+	mv_stack.pop();
+}
 void Game::display(){
 
 	glClear( GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT );
 
 	if( state == 1){
-		etime = .001 * glutGet(GLUT_ELAPSED_TIME);
 
 		// Set Up Projection and View 
 		vec4 eye;
@@ -756,6 +763,7 @@ void Game::display(){
     	}
 
     	else if ( death == 0){
+    		etime += 0.1;
 			advanceParticleJ();
     		glUniform1i(flag, 1);
     		drawParticlesJ(mv);
@@ -768,6 +776,8 @@ void Game::display(){
     		drawExplosion2(mv);
    		}
    		
+   		glUniform1i(flag, 6);
+   		drawSphere(15, mv);
    		mv_stack.push(mv);
 			mat4 instance2 = Translate(450, 80, 300) * Scale(1000, 1000, 1000);
 			glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance2);
@@ -820,6 +830,10 @@ void Game::display(){
 		drawMenu("images/p_asteroid.bmp");
 	}
 
+	else if ( state == 4){
+		drawMenu("images/control_asteroid.bmp");
+	}
+
 	glutSwapBuffers();
 }
 
@@ -866,11 +880,15 @@ void Game::keyboard( int key, int x, int y ){
 		}
 		break;
 	case 'j':
-		theta++;
+		vX+=2;
+		break;
+	case 'k':
+		vX-=2;
 		break;
 	case 32:
 		if(camLock != 1 && state == 1 && bFlag == 0){
 			bFlag = 1;
+
 			particle newBullet(vX, vY, vZ + 5, 4);
 			particle newBullet2(vX, vY, vZ - 5, 4);
 			bullets[0] = newBullet;
@@ -879,8 +897,14 @@ void Game::keyboard( int key, int x, int y ){
 		}
 		break;
 	case 'p':
-		if (state == 1) state = 2;
-		else if(state == 2) state =1 ;
+		if (state == 1) {
+			jetChannel->setPaused(true);
+			state = 2;
+		}	
+		else if(state == 2){
+			result = fmodSystem->playSound(FMOD_CHANNEL_FREE, jetSounds, false, &jetChannel);
+			state =1 ;
+		}
 		break;
 	default:
 		break;
@@ -911,7 +935,8 @@ void Game::keyRelease(int key, int x, int y){
 
 
 void Game::mouse(int button, int buttonState, int x, int y){
-	if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 500 && y < 565){
+	
+	if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 500 && y < 555){
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		state = 1;
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, jetSounds, false, &jetChannel);
@@ -919,10 +944,19 @@ void Game::mouse(int button, int buttonState, int x, int y){
 
 	}
 
-	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 600 && y < 665){
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 560 && y < 605){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
+		state = 4;
+	}
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 0 && y > 610 && y < 665){
 		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
 		cleanUp();
 		exit(0);
+	}
+
+	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 4 && y > 590 && y < 640){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, slotFill, false, &channel);
+		state = 0;
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 3 && y > 500 && y < 565){
@@ -954,11 +988,11 @@ void Game::mouse(int button, int buttonState, int x, int y){
 	}
 
 	else if (button == GLUT_LEFT_BUTTON && buttonState == GLUT_DOWN && state == 2 && y > 500 && y < 565){
+		result = fmodSystem->playSound(FMOD_CHANNEL_FREE, jetSounds, false, &jetChannel);
+		result = jetChannel->setVolume(0.2);
 		state = 1;
 	}	
-
 	
-
 
 }
 

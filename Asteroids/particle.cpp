@@ -7,6 +7,7 @@
 
 
 particle::particle(){
+	radius = rand() % 10 + 4; 
 	velocity = 3;
 	position = vec3(rand()%250, rand()%500, rand()%300+150);
 	alive = 0;
@@ -14,6 +15,7 @@ particle::particle(){
 	direction = vec3( (2.0 * (float)rand () /  (float)RAND_MAX )- 1.0, (2.0 * (float)rand () /  (float)RAND_MAX )- 1.0, (2.0 * (float)rand () /  (float)RAND_MAX )- 1.0 );
 }
 particle::particle(float x, float y, float z, float v){
+	radius = rand() % 10 + 3; 
 	velocity = v;
 	position = vec3(x,y,z);
 	alive = 0;
@@ -47,7 +49,9 @@ void particle::setAlive(float a){
 float particle::getV(){
 	return velocity;
 }
-
+int particle::getRadius(){
+	return radius;
+}
 vec3 particle::getDir(){
 	return direction;
 }
