@@ -248,7 +248,7 @@ void Game::advanceParticles(){
 	for ( i = 0; i < MAX_PARTICLES; i++){
 		rain[i].setPos(rain[i].getPos()+vec3(rain[i].getV(), 0,0));
 		rain[i].setAlive(rain[i].getAlive() + STEP);
-		int r = rain[i].getRadius()/2 + 7.5;
+		int r = rain[i].getRadius()/2 + 7.9;
 
 		if (rain[i].getPos().x > 550){
 			addParticle(i, rain[i].getV() + etime *.002);
