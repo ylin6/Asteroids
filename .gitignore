@@ -1,0 +1,6 @@
+
+*.o
+
+Asteroids/main
+
+Asteroids/Game.o
