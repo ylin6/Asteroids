@@ -25,7 +25,7 @@ void main(){
 
 	else if (flag == 5){
 		
-		gl_FragColor = vec4(sky, 1.0, 1.0, 1.0) * texture2D(texMap, texCoord);
+		gl_FragColor = vec4(sky, 1.0, 1.0, sky) * texture2D(texMap, texCoord);
 	}
 
 	else if (flag == 6){
