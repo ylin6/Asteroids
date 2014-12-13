@@ -27,6 +27,7 @@ Game::Game(){
 	bFlag = 0;
 	bg = 0;
 	sign = 1;
+	debug = false;
 
 	result = FMOD::System_Create( &fmodSystem );
 	result = fmodSystem->init( 32, FMOD_INIT_NORMAL, NULL );
@@ -118,6 +119,49 @@ void Game::cleanUp() {
 	result = menu->release();
 	result = lzr->release();
 
+}
+
+void Game::createSphere(int Radius){
+double PI = 3.14159;
+float X1,Y1,X2,Y2,Z1,Z2;
+float inc1,inc2,inc3,inc4,inc5,Radius1,Radius2;
+int Resolution = 20;
+	for(int w = 0; w < Resolution; w++) {
+        for(int h = (-Resolution/2); h < (Resolution/2); h++){
+
+ 
+			inc1 = (w/(float)Resolution)*2*PI;
+			inc2 = ((w+1)/(float)Resolution)*2*PI;
+			inc3 = (h/(float)Resolution)*PI;
+			inc4 = ((h+1)/(float)Resolution)*PI;
+
+			X1 = sin(inc1);
+			Y1 = cos(inc1);
+			X2 = sin(inc2);
+			Y2 = cos(inc2);
+
+// store the upper and lower radius, remember everything is going to be drawn as triangles
+			Radius1 = Radius*cos(inc3);
+			Radius2 = Radius*cos(inc4);
+
+ 
+
+
+			Z1 = Radius*sin(inc3);
+			Z2 = Radius*sin(inc4);
+
+			sphereV.push_back(vec3(Radius1*X1,Z1,Radius1*Y1));
+			sphereV.push_back(vec3(Radius1*X2,Z1,Radius1*Y2));
+			sphereV.push_back(vec3(Radius2*X2,Z2,Radius2*Y2));
+
+
+
+			sphereV.push_back(vec3(Radius1*X1,Z1,Radius1*Y1));
+			sphereV.push_back(vec3(Radius2*X2,Z2,Radius2*Y2));
+			sphereV.push_back(vec3(Radius2*X1,Z2,Radius2*Y1));
+
+		}
+	}
 }
 
 float Game::distance(float x1, float y1, float z1, float x2, float y2, float z2){
@@ -251,7 +295,7 @@ void Game::advanceParticles(){
 	for ( i = 0; i < MAX_PARTICLES; i++){
 		rain[i].setPos(rain[i].getPos()+vec3(rain[i].getV(), 0,0));
 		rain[i].setAlive(rain[i].getAlive() + STEP);
-		int r = rain[i].getRadius() + 7;
+		int r = rain[i].getRadius() + 4.5;
 
 		if (rain[i].getPos().x > 550){
 			addParticle(i, rain[i].getV() + etime *.002);
@@ -277,7 +321,7 @@ void Game::advanceParticles(){
 			
 		}
 		
-		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= r-7 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= r-7)  && bFlag == 1){
+		if( (distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[0].getPos().x, bullets[0].getPos().y, bullets[0].getPos().z ) <= r-6 || distance(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, bullets[1].getPos().x, bullets[1].getPos().y, bullets[1].getPos().z) <= r-6)  && bFlag == 1){
 				result = fmodSystem->playSound(FMOD_CHANNEL_FREE, explosionSound2, false, &channel);
 				if(drawEx2 == 0) createExplosion2(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z);
 				drawEx2 = 1;
@@ -346,12 +390,18 @@ void Game::drawExplosion2(mat4 mav){
 
 void Game::drawParticles(mat4 mav){
 	for (int i = 0; i < MAX_PARTICLES; i++ ){
-		mv_stack.push(mav);
-			mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(rain[i].getRadius(),rain[i].getRadius(),rain[i].getRadius());
-			glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
-			glDrawArrays(GL_TRIANGLES, 0, points2.size());
-			mav = mv_stack.top();
-		mv_stack.pop();
+		if(debug == false){
+			mv_stack.push(mav);
+				mat4 instance = Translate(rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z ) *  Scale(rain[i].getRadius(),rain[i].getRadius(),rain[i].getRadius());
+				glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
+				glDrawArrays(GL_TRIANGLES, 0, points2.size());
+				mav = mv_stack.top();
+			mv_stack.pop();
+		}
+
+		else{
+			drawSphere(rain[i].getRadius(),rain[i].getPos().x, rain[i].getPos().y, rain[i].getPos().z, mav);
+		}
 	}	
 }
 
@@ -543,6 +593,7 @@ void Game::drawMenu(string fileName){
 void Game::init(){
 
 	// Initiate buffers
+	createSphere(1);
 	makeCube();
 	createExplosion();
 	createParticles(); 
@@ -638,6 +689,14 @@ void Game::init(){
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(points2), sizeof(normals2), &normals2);
     glBufferSubData(GL_ARRAY_BUFFER, sizeof(points2) + sizeof(normals2),sizeof(tex_coords2), &tex_coords2);
 	
+	GLuint vao4;
+    glGenVertexArraysAPPLE(1, &vao4);
+    glBindVertexArrayAPPLE(vao4);
+
+	glGenBuffers(1, &buffer4);
+	glBindBuffer(GL_ARRAY_BUFFER, buffer4);
+	glBufferData(GL_ARRAY_BUFFER, sphereV.size() * sizeof(vec3), &sphereV[0], GL_STATIC_DRAW);
+
 	glEnable(GL_DEPTH_TEST);
 	glClearColor(0.0,0.0,0.0,1.0);
 
@@ -659,12 +718,16 @@ void Game::printw (float x, float y, float z, char* format, ...){
     }
 }
 
-void Game::drawSphere(double r, mat4 mav){
+void Game::drawSphere(double r, float x, float y, float z, mat4 mav){
 
+	glBindBuffer(GL_ARRAY_BUFFER, buffer4);
+	
+	glEnableVertexAttribArray(loc);
+	glVertexAttribPointer( loc, 3, GL_FLOAT, GL_FALSE, 0, 0 );
 	mv_stack.push(mav);
-		mat4 instance = Translate(vX, vY, vZ) * Scale(15, 15, 15);
+		mat4 instance = Translate(x, y, z) * Scale(r,r,r);
 		glUniformMatrix4fv(model_view, 1, GL_TRUE, mav*instance);
-		gluSphere(gluNewQuadric(), 15, 10, 10);
+		glDrawArrays(GL_LINES, 0, sphereV.size());
 		mav = mv_stack.top();
 	mv_stack.pop();
 }
@@ -677,7 +740,6 @@ void Game::display(){
 		if (bg > 1) sign = -1;
 		else if ( bg < 0) sign =1;
 		bg = bg + (0.003 * sign);
-		cout<<bg<<endl;
 		glUniform1f(sky,bg);
 		// Set Up Projection and View 
 		vec4 eye;
@@ -736,8 +798,9 @@ void Game::display(){
 			if(death == 0) glDrawArrays(GL_TRIANGLES, 0, vertices.size());
     		mv = mv_stack.top();
    		mv_stack.pop();
-	
-    
+		
+		glUniform1i(flag, 6);
+    	if( debug ) drawSphere(4.5, vX,vY,vZ, mv);
    		//Bind Buffer for enviroment, stars, explosions and jet flames
 		glBindBuffer(GL_ARRAY_BUFFER, buffer2);
 	
@@ -792,7 +855,6 @@ void Game::display(){
    		}
    		
    		glUniform1i(flag, 6);
-   		drawSphere(15, mv);
    		mv_stack.push(mv);
 			mat4 instance2 = Translate(450, 80, 300) * Scale(1000, 1000, 1000);
 			glUniformMatrix4fv(model_view, 1, GL_TRUE, mv*instance2);
@@ -828,7 +890,8 @@ void Game::display(){
 	
 		if ( etime > 3){
     	advanceParticles();
-    	glUniform1i(flag, 4);
+    	if(debug == false)glUniform1i(flag, 4);
+    	else glUniform1i(flag,6);
     	drawParticles(mv);
     	}
 	}
@@ -895,10 +958,10 @@ void Game::keyboard( int key, int x, int y ){
 		}
 		break;
 	case 'j':
-		vX+=2;
+		theta--;
 		break;
 	case 'k':
-		vX-=2;
+		theta++;
 		break;
 	case 32:
 		if(state == 1 && bFlag == 0 && death == 0){
@@ -923,7 +986,9 @@ void Game::keyboard( int key, int x, int y ){
 		break;
 	default:
 		break;
-
+	case 'w':
+		debug = ! debug;
+		break;
     }
 
     soundCheck();

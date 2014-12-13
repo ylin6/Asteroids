@@ -38,7 +38,8 @@ class Game{
 		void setupIdleCallback();
 		void setupMouseCallback();
 
-		void drawSphere(double, mat4);
+		void createSphere(int);
+		void drawSphere(double, float, float, float, mat4);
 		void initReset();
 		void drawMenu(string);
 		void soundCheck();
@@ -107,6 +108,7 @@ class Game{
 		GLuint buffer;
 		GLuint buffer2;
 		GLuint buffer3;
+		GLuint buffer4;
 
 		GLuint texture;
 		GLuint loc;
@@ -169,6 +171,7 @@ class Game{
 		vec3 points[42];
 		vec2 tex_coords[42];
 
+		vector <vec3> sphereV;
 		vector <vec3> vertices;
 		vector <vec3> norm;
 		vector <vec2> uvs;
@@ -211,6 +214,7 @@ class Game{
 		float eZ;
 		int sign;
 		float bg;
+		bool debug;
 };
 
 #endif 
